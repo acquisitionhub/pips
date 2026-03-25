@@ -6,7 +6,7 @@ import pytz
 app = Flask(__name__)
 
 # --- CONFIGURATION ---
-API_KEY = "YOUR_ALPHA_VANTAGE_KEY" # <--- Put your key here
+API_KEY = "S0YX8M0WU2IW5CIZ" # <--- Put your key here
 SYMBOL = "EURUSD"
 
 def get_fx_data():
