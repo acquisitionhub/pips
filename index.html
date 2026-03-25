@@ -1,49 +1,69 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Pips Pro</title>
+    <meta charset="UTF-8">
+    <title>PIPS Tracker Dashboard</title>
     <style>
-        body { background: #121212; color: #e0e0e0; font-family: sans-serif; display: flex; justify-content: center; padding: 50px; }
-        .container { width: 400px; background: #1e1e1e; padding: 20px; border-radius: 12px; border: 1px solid #333; }
-        .session { margin-bottom: 20px; padding: 15px; border-left: 4px solid #3498db; background: #252525; }
-        .session.ny { border-color: #e74c3c; }
-        .session.london { border-color: #f1c40f; }
-        .pip-val { font-size: 24px; font-weight: bold; color: #2ecc71; }
-        .pip-val.neg { color: #e74c3c; }
-        h1 { font-size: 18px; margin-bottom: 20px; color: #888; text-transform: uppercase; }
-        .label { font-size: 12px; color: #777; }
+        :root { --bg: #0f111a; --card: #1a1d2e; --accent: #00d4ff; --text: #ffffff; --red: #ff4b5c; --green: #00ff88; }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; padding-top: 50px; }
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 900px; }
+        .card { background: var(--card); border: 1px solid #2d334a; border-radius: 12px; padding: 25px; text-align: center; transition: 0.3s; }
+        .card:hover { border-color: var(--accent); transform: translateY(-5px); }
+        .session-name { font-size: 14px; text-transform: uppercase; color: #8b949e; letter-spacing: 2px; }
+        .pip-count { font-size: 48px; font-weight: 800; margin: 15px 0; }
+        .open-price { font-size: 14px; opacity: 0.6; }
+        .pos { color: var(--green); }
+        .neg { color: var(--red); }
+        .header { margin-bottom: 40px; text-align: center; }
+        .current-price { font-size: 24px; color: var(--accent); font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Live Edge Tracker</h1>
-        <div id="tracker-body">
-            </div>
+    <div class="header">
+        <h1>PIPS TRACKER <span style="font-weight: 300;">PRO</span></h1>
+        <div class="current-price" id="price-display">Loading...</div>
+    </div>
+
+    <div class="grid" id="dashboard">
+        <div class="card">
+            <div class="session-name">Daily Open</div>
+            <div id="daily-pips" class="pip-count">0.0</div>
+            <div id="daily-open" class="open-price">0.0000</div>
+        </div>
+        <div class="card" style="border-top: 4px solid #f1c40f;">
+            <div class="session-name">London Open</div>
+            <div id="london-pips" class="pip-count">0.0</div>
+            <div id="london-open" class="open-price">0.0000</div>
+        </div>
+        <div class="card" style="border-top: 4px solid #e74c3c;">
+            <div class="session-name">NY Open</div>
+            <div id="ny-pips" class="pip-count">0.0</div>
+            <div id="ny-open" class="open-price">0.0000</div>
+        </div>
     </div>
 
     <script>
-        async function updateStats() {
-            const res = await fetch('/api/tracker');
-            const data = await res.json();
-            
-            const sessions = ['daily', 'london', 'ny'];
-            let html = '';
-            
-            sessions.forEach(s => {
-                const val = data[s].dist;
-                const colorClass = val < 0 ? 'neg' : '';
-                html += `
-                    <div class="session ${s}">
-                        <div class="label">${s.toUpperCase()} OPEN: ${data[s].open}</div>
-                        <div class="pip-val ${colorClass}">${val} Pips</div>
-                        <div class="label">Distance from Open</div>
-                    </div>
-                `;
-            });
-            document.getElementById('tracker-body').innerHTML = html;
+        async function fetchEdge() {
+            try {
+                const response = await fetch('/api/stats');
+                const data = await response.json();
+                
+                document.getElementById('price-display').innerText = `Current: ${data.current}`;
+                
+                const sessions = ['daily', 'london', 'ny'];
+                sessions.forEach(s => {
+                    const el = document.getElementById(`${s}-pips`);
+                    const openEl = document.getElementById(`${s}-open`);
+                    const val = data[s].pips;
+                    
+                    el.innerText = (val > 0 ? "+" : "") + val;
+                    el.className = 'pip-count ' + (val >= 0 ? 'pos' : 'neg');
+                    openEl.innerText = `OPEN @ ${data[s].open}`;
+                });
+            } catch (e) { console.log("Fetch failed"); }
         }
-        setInterval(updateStats, 5000); // Update every 5 seconds
-        updateStats();
+        setInterval(fetchEdge, 60000); // Update once per minute (save API calls)
+        fetchEdge();
     </script>
 </body>
 </html>
